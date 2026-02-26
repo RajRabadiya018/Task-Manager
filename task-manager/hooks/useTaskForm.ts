@@ -1,103 +1,102 @@
 import { Task } from "@/types/task";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 interface FormValues {
-    title: string;
-    description: string;
-    priority: Task["priority"];
-    status: Task["status"];
-    dueDate: string;
-    tags: string;       
-    assignedTo: string;
+  title: string;
+  description: string;
+  priority: Task["priority"];
+  status: Task["status"];
+  dueDate: string;
+  tags: string;
+  assignedTo: string;
 }
 
 interface FormErrors {
-    title?: string;
-    dueDate?: string;
+  title?: string;
+  dueDate?: string;
 }
 
 interface UseTaskFormReturn {
-    values: FormValues;
-    handleChange: (field: keyof FormValues, value: string) => void;
-    handleSubmit: (onSubmit: (values: FormValues) => void) => void;
-    errors: FormErrors;
-    reset: () => void;
+  values: FormValues;
+  handleChange: (field: keyof FormValues, value: string) => void;
+  handleSubmit: (onSubmit: (values: FormValues) => void) => void;
+  errors: FormErrors;
+  reset: () => void;
 }
 
 const defaultValues: FormValues = {
-    title: "",
-    description: "",
-    priority: "medium",
-    status: "todo",
-    dueDate: "",
-    tags: "",
-    assignedTo: "",
+  title: "",
+  description: "",
+  priority: "medium",
+  status: "todo",
+  dueDate: "",
+  tags: "",
+  assignedTo: "",
 };
 
 /**
- * @param initialValues 
+ * @param initialValues
  */
 export function useTaskForm(initialValues?: Partial<Task>): UseTaskFormReturn {
-    
-    const startingValues: FormValues = {
-        ...defaultValues,
-        ...(initialValues
-            ? {
-                title: initialValues.title || "",
-                description: initialValues.description || "",
-                priority: initialValues.priority || "medium",
-                status: initialValues.status || "todo",
-                dueDate: initialValues.dueDate || "",
-                tags: initialValues.tags?.join(", ") || "", 
-                assignedTo: initialValues.assignedTo || "",
-            }
-            : {}),
-    };
+  const startingValues: FormValues = useMemo(
+    () => ({
+      ...defaultValues,
+      ...(initialValues
+        ? {
+            title: initialValues.title || "",
+            description: initialValues.description || "",
+            priority: initialValues.priority || "medium",
+            status: initialValues.status || "todo",
+            dueDate: initialValues.dueDate || "",
+            tags: initialValues.tags?.join(", ") || "",
+            assignedTo: initialValues.assignedTo || "",
+          }
+        : {}),
+    }),
+    [initialValues],
+  );
 
-    const [values, setValues] = useState<FormValues>(startingValues);
-    const [errors, setErrors] = useState<FormErrors>({});
+  const [values, setValues] = useState<FormValues>(startingValues);
+  const [errors, setErrors] = useState<FormErrors>({});
 
-    const handleChange = useCallback(
-        (field: keyof FormValues, value: string) => {
-            setValues((prev) => ({ ...prev, [field]: value }));
-            setErrors((prev) => ({ ...prev, [field]: undefined }));
-        },
-        []
-    );
+  const handleChange = useCallback((field: keyof FormValues, value: string) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+  }, []);
 
-    const handleSubmit = useCallback(
-        (onSubmit: (values: FormValues) => void) => {
-            const newErrors: FormErrors = {};
+  const handleSubmit = useCallback(
+    (onSubmit: (values: FormValues) => void) => {
+      const newErrors: FormErrors = {};
 
-            if (!values.title.trim()) {
-                newErrors.title = "Title is required";
-            }
+      if (!values.title.trim()) {
+        newErrors.title = "Title is required";
+      }
 
-            if (!values.dueDate || isNaN(Date.parse(values.dueDate))) {
-                newErrors.dueDate = "A valid due date is required";
-            }
+      if (!values.dueDate || isNaN(Date.parse(values.dueDate))) {
+        newErrors.dueDate = "A valid due date is required";
+      }
 
-            if (Object.keys(newErrors).length > 0) {
-                setErrors(newErrors);
-                return;
-            }
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
 
-            setErrors({});
-            onSubmit(values);
-        },
-        [values]
-    );
+      setErrors({});
+      onSubmit(values);
+    },
+    [values],
+  );
 
-    const reset = useCallback(() => {
-        setValues(startingValues);
-        setErrors({});
-    }, []);
+  const reset = useCallback(() => {
+    setValues(startingValues);
+    setErrors({});
+  }, [startingValues]);
 
-    return {
-        values,
-        handleChange,
-        handleSubmit,
-        errors,
-        reset,
-    };
+  return {
+    values,
+    handleChange,
+    handleSubmit,
+    errors,
+    reset,
+  };
 }
